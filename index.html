@@ -1,13 +1,819 @@
 <!DOCTYPE html>
-<html lang="uz"><head><meta charset="UTF-8"><title>Dars Jadvali Va Xona Bandligi Paneli</title>
-<style>
-    body { margin:0; background:linear-gradient(135deg, #0f0c1b, #24243e); height:100vh; display:flex; justify-content:center; align-items:center; font-family:sans-serif; }
-    .box { width:380px; padding:30px; background:rgba(255,255,255,0.05); backdrop-filter:blur(15px); border-radius:20px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 20px 50px rgba(0,0,0,0.4); color:white; text-align:center; }
-    .bar { background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin:10px 0; border-left:4px solid #00ffcc; }
-</style></head><body>
-    <div class="box">
-        <h2>Dars Jadvali Va Xona Bandligi Paneli</h2>
-        <div class="bar"><h4>Tizim holati: Integratsiya qilingan</h4></div>
-        <div class="bar" style="border-left-color:#ff007f;"><h4>Tezlik: 100% yuklangan</h4></div>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduSchedule Pro - Xonalar va Darslar Boshqaruvi</title>
+  <style>
+    :root {
+      --bg-main: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --border: #cbd5e1;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-theme {
+      --bg-main: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --success-light: rgba(16, 185, 129, 0.2);
+      --danger-light: rgba(239, 68, 68, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; transition: background-color 0.2s, color 0.2s; }
+    body { background-color: var(--bg-main); color: var(--text-main); padding: 1.5rem; }
+    .app-container { max-width: 1450px; margin: 0 auto; }
+
+    /* Header */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .logo { display: flex; align-items: center; gap: 0.8rem; }
+    .logo-icon { font-size: 2.2rem; }
+    .logo h1 { font-size: 1.3rem; font-weight: 700; }
+    .logo p { font-size: 0.8rem; color: var(--text-muted); }
+
+    .live-clock-box { text-align: center; background: var(--bg-main); padding: 0.4rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
+    #liveClock { font-size: 1.2rem; font-weight: 700; color: var(--primary); display: block; }
+    #liveDate { font-size: 0.75rem; color: var(--text-muted); }
+
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1.2rem;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+    .stat-icon { font-size: 2rem; }
+    .stat-card h3 { font-size: 1.5rem; }
+    .stat-card p { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* Main Layout */
+    .main-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem; }
+    @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
+
+    .panel-section {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .section-header h2 { font-size: 1.1rem; font-weight: 700; }
+
+    /* Filters */
+    .filter-group { display: flex; gap: 0.3rem; background: var(--bg-main); padding: 0.2rem; border-radius: 8px; }
+    .filter-btn { border: none; background: transparent; padding: 0.35rem 0.8rem; font-size: 0.8rem; border-radius: 6px; cursor: pointer; color: var(--text-muted); }
+    .filter-btn.active { background: var(--card-bg); color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
+
+    /* Rooms Grid */
+    .rooms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .room-card {
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .room-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .room-card.is-free { border-left: 6px solid var(--success); }
+    .room-card.is-busy { border-left: 6px solid var(--danger); }
+
+    .room-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+    .room-title { font-weight: 700; font-size: 1rem; }
+    .status-tag { padding: 0.2rem 0.5rem; font-size: 0.7rem; border-radius: 20px; font-weight: 700; }
+    .tag-free { background: var(--success-light); color: var(--success); }
+    .tag-busy { background: var(--danger-light); color: var(--danger); }
+
+    .room-body { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+    .subject-title { font-weight: 700; color: var(--text-main); margin-top: 0.4rem; font-size: 0.85rem; }
+
+    /* Schedule Controls & Table */
+    .schedule-controls { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .schedule-controls select, .schedule-controls input {
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 0.85rem;
+    }
+    .table-container { overflow-x: auto; margin-top: 0.8rem; }
+    .schedule-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .schedule-table th, .schedule-table td { padding: 0.75rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .schedule-table th { background: var(--bg-main); color: var(--text-muted); font-weight: 600; }
+    .schedule-table tbody tr:hover { background: var(--bg-main); }
+
+    /* Buttons */
+    .btn { padding: 0.55rem 1rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-secondary { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border); }
+    .btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+    .btn-del { background: var(--danger-light); color: var(--danger); border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; }
+    .btn-block { width: 100%; margin-top: 1rem; justify-content: center; }
+
+    /* Modals */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
+    .modal.hidden, .hidden { display: none !important; }
+    .modal-content { background: var(--card-bg); padding: 1.8rem; border-radius: var(--radius); width: 480px; max-width: 92%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .close-btn { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+
+    .form-group { margin-bottom: 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    .form-group input, .form-group select { padding: 0.55rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-main); color: var(--text-main); font-size: 0.85rem; }
+
+    .alert-danger { background: var(--danger-light); color: var(--danger); padding: 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-top: 0.5rem; display: block; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: white; padding: 0.8rem 1.4rem; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="logo">
+        <span class="logo-icon">🎓</span>
+        <div>
+          <h1>EduSchedule Pro</h1>
+          <p>Xonalar bandligi va darslar boshqaruvi</p>
+        </div>
+      </div>
+      
+      <div class="live-clock-box">
+        <span id="liveClock">00:00:00</span>
+        <small id="liveDate">Tizim tayyorlanmoqda...</small>
+      </div>
+
+      <div class="header-actions">
+        <button id="todayBtn" class="btn btn-secondary">📍 Bugungi Kun</button>
+        <button id="themeToggleBtn" class="btn btn-secondary">🌙 Rejim</button>
+        <button id="resetDataBtn" class="btn btn-danger" title="Dastlabki namunalarga qaytarish">🔄 Qayta tiklash</button>
+        <button id="exportCsvBtn" class="btn btn-secondary">📥 CSV</button>
+        <button id="openRoomModalBtn" class="btn btn-success">🏛️ + Yangi Xona</button>
+        <button id="openLessonModalBtn" class="btn btn-primary">📖 + Dars Qo'shish</button>
+      </div>
+    </header>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+      <div class="stat-card">
+        <span class="stat-icon">🏢</span>
+        <div><h3 id="statTotalRooms">0</h3><p>Jami Xonalar</p></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🟢</span>
+        <div><h3 id="statFreeRooms">0</h3><p>Hozir Bo'sh</p></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🔴</span>
+        <div><h3 id="statBusyRooms">0</h3><p>Hozir Band</p></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📚</span>
+        <div><h3 id="statTodayLessons">0</h3><p>Tanlangan Kungi Darslar</p></div>
+      </div>
+    </section>
+
+    <!-- Main Layout -->
+    <main class="main-layout">
+      <!-- Left: Rooms Grid Panel -->
+      <section class="panel-section">
+        <div class="section-header">
+          <h2>🚪 Xonalar Holati (Real-vaqt)</h2>
+          <div class="filter-group">
+            <button class="filter-btn active" data-status="all">Barchasi</button>
+            <button class="filter-btn" data-status="free">Bo'sh</button>
+            <button class="filter-btn" data-status="busy">Band</button>
+          </div>
+        </div>
+        <div id="roomsGrid" class="rooms-grid"></div>
+      </section>
+
+      <!-- Right: Schedule Panel -->
+      <section class="panel-section">
+        <div class="section-header">
+          <h2>📅 Dars Jadvali</h2>
+          <div class="schedule-controls">
+            <select id="daySelect">
+              <option value="Dushanba">Dushanba</option>
+              <option value="Seshanba">Seshanba</option>
+              <option value="Chorshanba">Chorshanba</option>
+              <option value="Payshanba">Payshanba</option>
+              <option value="Juma">Juma</option>
+              <option value="Shanba">Shanba</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Fan, xona, o'qituvchi...">
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Vaqt</th>
+                <th>Xona</th>
+                <th>Fan Nomi</th>
+                <th>O'qituvchi</th>
+                <th>Guruh</th>
+                <th>Amal</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal 1: Add Room (Yangi Xona Qo'shish) -->
+  <div id="roomModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Yangi Xona Qo'shish</h2>
+        <span id="closeRoomModalBtn" class="close-btn">&times;</span>
+      </div>
+      <form id="roomForm">
+        <div class="form-group">
+          <label for="roomNumberInput">Xona Nomi / Raqami:</label>
+          <input type="text" id="roomNumberInput" placeholder="Masalan: 404-Xona yoki IT-Lab" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomCapacityInput">Sig'imi (talaba soni):</label>
+            <input type="number" id="roomCapacityInput" placeholder="30" min="5" max="300" required>
+          </div>
+          <div class="form-group">
+            <label for="roomFloorInput">Qavat:</label>
+            <input type="number" id="roomFloorInput" placeholder="1" min="1" max="10" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Xonani Saqlash</button>
+      </form>
     </div>
-</body></html>
+  </div>
+
+  <!-- Modal 2: Add Lesson (Yangi Dars Qo'shish) -->
+  <div id="lessonModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Yangi Dars Qo'shish</h2>
+        <span id="closeLessonModalBtn" class="close-btn">&times;</span>
+      </div>
+      <form id="lessonForm">
+        <div class="form-group">
+          <label for="dayInput">Hafta Kuni:</label>
+          <select id="dayInput" required>
+            <option value="Dushanba">Dushanba</option>
+            <option value="Seshanba">Seshanba</option>
+            <option value="Chorshanba">Chorshanba</option>
+            <option value="Payshanba">Payshanba</option>
+            <option value="Juma">Juma</option>
+            <option value="Shanba">Shanba</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="roomSelectInput">Xonani Tanlang:</label>
+            <select id="roomSelectInput" required></select>
+          </div>
+          <div class="form-group">
+            <label for="groupInput">Guruh Nomi:</label>
+            <input type="text" id="groupInput" placeholder="Masalan: CS-101" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="subjectInput">Fan Nomi:</label>
+          <input type="text" id="subjectInput" placeholder="Masalan: Sun'iy Intellekt" required>
+        </div>
+        <div class="form-group">
+          <label for="teacherInput">O'qituvchi:</label>
+          <input type="text" id="teacherInput" placeholder="Masalan: Prof. Alimov" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startTimeInput">Boshlanish Vaqti:</label>
+            <input type="time" id="startTimeInput" required>
+          </div>
+          <div class="form-group">
+            <label for="endTimeInput">Tugash Vaqti:</label>
+            <input type="time" id="endTimeInput" required>
+          </div>
+        </div>
+        <div id="conflictAlert" class="alert-danger hidden">⚠️ Ushbu xona tanlangan vaqtda va kunda band!</div>
+        <button type="submit" class="btn btn-primary btn-block">Saqlash</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Room Details & Management -->
+  <div id="roomDetailModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="roomDetailTitle">Xona Ma'lumotlari</h2>
+        <span id="closeRoomDetailBtn" class="close-btn">&times;</span>
+      </div>
+      <div id="roomDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- JavaScript -->
+  <script>
+    // Initial Default Data
+    const defaultRooms = [
+      { id: 'R101', number: '101-Xona', capacity: 30, floor: 1 },
+      { id: 'R102', number: '102-Xona', capacity: 40, floor: 1 },
+      { id: 'R201', number: '201-Laboratoriya', capacity: 25, floor: 2 },
+      { id: 'R202', number: '202-Kompyuter Zali', capacity: 32, floor: 2 },
+      { id: 'R301', number: '301-Ma\'ruzaxona', capacity: 100, floor: 3 }
+    ];
+
+    const defaultSchedule = [
+      { id: 101, day: 'Dushanba', roomId: 'R101', subject: 'Sun\'iy Intellekt', teacher: 'Prof. Alimov', group: 'AI-201', startTime: '09:00', endTime: '10:20' },
+      { id: 102, day: 'Dushanba', roomId: 'R101', subject: 'Python FastAPI', teacher: 'A. Karimov', group: 'PY-102', startTime: '10:30', endTime: '11:50' },
+      { id: 103, day: 'Dushanba', roomId: 'R202', subject: 'React Frontend', teacher: 'B. Rustamov', group: 'FE-301', startTime: '09:00', endTime: '10:20' },
+      { id: 104, day: 'Seshanba', roomId: 'R201', subject: 'Fizika Laboratoriyasi', teacher: 'N. Umarova', group: 'PH-105', startTime: '13:30', endTime: '14:50' },
+      { id: 105, day: 'Chorshanba', roomId: 'R301', subject: 'Oliy Matematika', teacher: 'D. Qodirov', group: 'MATH-11', startTime: '11:00', endTime: '12:20' }
+    ];
+
+    // State Variables
+    let rooms = [];
+    let schedule = [];
+    let selectedDay = 'Dushanba';
+    let statusFilter = 'all';
+    let searchQuery = '';
+
+    // Load Data from LocalStorage
+    function loadStorageData() {
+      try {
+        const savedRooms = localStorage.getItem('eduschedule_rooms_v4');
+        const savedSchedule = localStorage.getItem('eduschedule_schedule_v4');
+
+        rooms = savedRooms ? JSON.parse(savedRooms) : [...defaultRooms];
+        schedule = savedSchedule ? JSON.parse(savedSchedule) : [...defaultSchedule];
+      } catch (e) {
+        console.warn("Storage yuklanishida xatolik!", e);
+        rooms = [...defaultRooms];
+        schedule = [...defaultSchedule];
+      }
+      saveStorageData();
+    }
+
+    function saveStorageData() {
+      localStorage.setItem('eduschedule_rooms_v4', JSON.stringify(rooms));
+      localStorage.setItem('eduschedule_schedule_v4', JSON.stringify(schedule));
+    }
+
+    // App Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStorageData();
+      populateRoomDropdown();
+      setupEventListeners();
+      autoSetCurrentDay();
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderAll();
+    });
+
+    // Clock and Date
+    function updateClock() {
+      const now = new Date();
+      const clockEl = document.getElementById('liveClock');
+      const dateEl = document.getElementById('liveDate');
+      
+      if (clockEl) clockEl.innerText = now.toLocaleTimeString('uz-UZ');
+      if (dateEl) dateEl.innerText = now.toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+      
+      renderRooms();
+      updateStats();
+    }
+
+    // Auto set current weekday
+    function autoSetCurrentDay() {
+      const daysMap = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+      const todayIndex = new Date().getDay();
+      const todayName = daysMap[todayIndex];
+      
+      if (todayName !== 'Yakshanba') {
+        selectedDay = todayName;
+        const daySelect = document.getElementById('daySelect');
+        const dayInput = document.getElementById('dayInput');
+        if (daySelect) daySelect.value = todayName;
+        if (dayInput) dayInput.value = todayName;
+      }
+    }
+
+    // Populate Dropdown for Add Lesson Modal
+    function populateRoomDropdown() {
+      const select = document.getElementById('roomSelectInput');
+      if (!select) return;
+
+      if (rooms.length === 0) {
+        select.innerHTML = `<option value="">Xona mavjud emas</option>`;
+        return;
+      }
+
+      select.innerHTML = rooms.map(r => `<option value="${r.id}">${r.number} (${r.capacity} o'rin, ${r.floor}-qavat)</option>`).join('');
+    }
+
+    // Calculate Active Lesson
+    function getRoomActiveLesson(roomId) {
+      const now = new Date();
+      const daysMap = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+      const todayName = daysMap[now.getDay()];
+      const currentTimeStr = now.toTimeString().substring(0, 5);
+
+      return schedule.find(s => {
+        return s.roomId === roomId &&
+               s.day === todayName &&
+               currentTimeStr >= s.startTime &&
+               currentTimeStr <= s.endTime;
+      });
+    }
+
+    // Render Rooms Grid
+    function renderRooms() {
+      const grid = document.getElementById('roomsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (rooms.length === 0) {
+        grid.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1; text-align:center; padding: 2rem;">Hozircha xonalar mavjud emas. Yuqoridagi <b>"+ Yangi Xona"</b> tugmasidan qo'shing.</p>`;
+        return;
+      }
+
+      rooms.forEach(room => {
+        const activeLesson = getRoomActiveLesson(room.id);
+        const isBusy = Boolean(activeLesson);
+
+        if (statusFilter === 'free' && isBusy) return;
+        if (statusFilter === 'busy' && !isBusy) return;
+
+        const card = document.createElement('div');
+        card.className = `room-card ${isBusy ? 'is-busy' : 'is-free'}`;
+        card.onclick = () => showRoomDetails(room.id);
+
+        card.innerHTML = `
+          <div class="room-head">
+            <span class="room-title">${room.number}</span>
+            <span class="status-tag ${isBusy ? 'tag-busy' : 'tag-free'}">
+              ${isBusy ? '🔴 BAND' : '🟢 BO\'SH'}
+            </span>
+          </div>
+          <div class="room-body">
+            <p>📏 Sig'im: <b>${room.capacity} ta o'rin</b> (${room.floor}-qavat)</p>
+            ${isBusy ? `
+              <p class="subject-title">📘 ${activeLesson.subject}</p>
+              <p>👨‍🏫 ${activeLesson.teacher}</p>
+              <p>👥 Guruh: <b>${activeLesson.group}</b> (${activeLesson.startTime}-${activeLesson.endTime})</p>
+            ` : `
+              <p class="subject-title" style="color: var(--success); margin-top: 0.5rem;">Hozirda bo'sh</p>
+            `}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // Render Schedule Table
+    function renderSchedule() {
+      const body = document.getElementById('scheduleBody');
+      if (!body) return;
+      body.innerHTML = '';
+
+      const filtered = schedule.filter(s => {
+        const matchesDay = s.day === selectedDay;
+        const q = searchQuery.toLowerCase().trim();
+        const room = rooms.find(r => r.id === s.roomId);
+        const roomName = room ? room.number.toLowerCase() : '';
+
+        const matchesSearch = !q || 
+                              s.subject.toLowerCase().includes(q) ||
+                              s.teacher.toLowerCase().includes(q) ||
+                              s.group.toLowerCase().includes(q) ||
+                              roomName.includes(q);
+
+        return matchesDay && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Tanlangan kun yoki qidiruv bo'yicha darslar topilmadi.</td></tr>`;
+        return;
+      }
+
+      filtered.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      filtered.forEach(s => {
+        const room = rooms.find(r => r.id === s.roomId);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${s.startTime} - ${s.endTime}</b></td>
+          <td>${room ? room.number : '<i style="color:red">O\'chirilgan xona</i>'}</td>
+          <td><b>${s.subject}</b></td>
+          <td>${s.teacher}</td>
+          <td><span style="background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight:600;">${s.group}</span></td>
+          <td><button class="btn-del" onclick="deleteLesson(${s.id})">O'chirish</button></td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    // Update Statistics
+    function updateStats() {
+      const dayLessons = schedule.filter(s => s.day === selectedDay);
+      const busyCount = rooms.filter(r => Boolean(getRoomActiveLesson(r.id))).length;
+
+      document.getElementById('statTotalRooms').innerText = rooms.length;
+      document.getElementById('statBusyRooms').innerText = busyCount;
+      document.getElementById('statFreeRooms').innerText = rooms.length - busyCount;
+      document.getElementById('statTodayLessons').innerText = dayLessons.length;
+    }
+
+    function renderAll() {
+      populateRoomDropdown();
+      renderRooms();
+      renderSchedule();
+      updateStats();
+    }
+
+    // Delete Lesson
+    window.deleteLesson = function(id) {
+      schedule = schedule.filter(s => s.id !== id);
+      saveStorageData();
+      renderAll();
+      showToast('Dars o\'chirildi!');
+    };
+
+    // Delete Room (Xonani o'chirish)
+    window.deleteRoom = function(roomId) {
+      const hasLessons = schedule.some(s => s.roomId === roomId);
+      if (hasLessons) {
+        if (!confirm('Ushbu xonaga biriktirilgan darslar mavjud! Baribir o\'chirilsinmi?')) return;
+        // Clean related lessons
+        schedule = schedule.filter(s => s.roomId !== roomId);
+      } else {
+        if (!confirm('Rostdan ham ushbu xonani o\'chirmoqchimisiz?')) return;
+      }
+
+      rooms = rooms.filter(r => r.id !== roomId);
+      saveStorageData();
+      document.getElementById('roomDetailModal').classList.add('hidden');
+      renderAll();
+      showToast('Xona o\'chirib tashlandi!');
+    };
+
+    // Check Time Conflicts
+    function hasTimeConflict(roomId, day, startTime, endTime) {
+      return schedule.some(s => {
+        if (s.roomId !== roomId || s.day !== day) return false;
+        return (startTime < s.endTime) && (endTime > s.startTime);
+      });
+    }
+
+    // Room Details Modal
+    function showRoomDetails(roomId) {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      const title = document.getElementById('roomDetailTitle');
+      const body = document.getElementById('roomDetailBody');
+      const modal = document.getElementById('roomDetailModal');
+
+      title.innerText = `${room.number} - Ma'lumotlar va Jadval`;
+      
+      const roomLessons = schedule.filter(s => s.roomId === roomId && s.day === selectedDay);
+      roomLessons.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      body.innerHTML = `
+        <div style="background: var(--bg-main); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p>📐 Sig'imi: <b>${room.capacity} ta o'rin</b></p>
+            <p>🏢 Qavat: <b>${room.floor}-qavat</b></p>
+          </div>
+          <button class="btn btn-danger" onclick="deleteRoom('${room.id}')">🗑️ Xonani O'chirish</button>
+        </div>
+        <h4 style="margin-top: 1rem;">${selectedDay} kungi darslar:</h4>
+        ${roomLessons.length === 0 ? `
+          <p style="padding: 1rem 0; color: var(--text-muted);">${selectedDay} kuni ushbu xonada hech qanday dars yo'q.</p>
+        ` : `
+          <ul style="list-style: none; margin-top: 0.5rem;">
+            ${roomLessons.map(l => `
+              <li style="padding: 0.8rem; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${l.startTime} - ${l.endTime}</strong>: ${l.subject}
+                  <br><small style="color:var(--text-muted)">👨‍🏫 ${l.teacher} | 👥 ${l.group}</small>
+                </div>
+              </li>
+            `).join('')}
+          </ul>
+        `}
+      `;
+
+      modal.classList.remove('hidden');
+    }
+
+    // Toast Message
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+
+    // CSV Export
+    function exportToCSV() {
+      let csv = 'Hafta Kuni,Vaqt,Xona,Fan,Oqituvchi,Guruh\n';
+      schedule.forEach(s => {
+        const room = rooms.find(r => r.id === s.roomId);
+        csv += `"${s.day}","${s.startTime}-${s.endTime}","${room ? room.number : ''}","${s.subject}","${s.teacher}","${s.group}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Jadval_${selectedDay}.csv`;
+      link.click();
+      showToast('CSV yuklab olindi!');
+    }
+
+    // Setup Event Listeners
+    function setupEventListeners() {
+      document.getElementById('daySelect').addEventListener('change', (e) => {
+        selectedDay = e.target.value;
+        renderAll();
+      });
+
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderSchedule();
+      });
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          statusFilter = e.target.dataset.status;
+          renderRooms();
+        });
+      });
+
+      document.getElementById('todayBtn').onclick = () => {
+        autoSetCurrentDay();
+        renderAll();
+        showToast('Bugungi kunga o\'tildi!');
+      };
+
+      document.getElementById('themeToggleBtn').onclick = () => {
+        document.body.classList.toggle('dark-theme');
+        showToast('Mavzu o\'zgartirildi');
+      };
+
+      document.getElementById('resetDataBtn').onclick = () => {
+        if (confirm('Barcha xonalar va darslar dastlabki holatga qaytarilsinmi?')) {
+          localStorage.removeItem('eduschedule_rooms_v4');
+          localStorage.removeItem('eduschedule_schedule_v4');
+          rooms = [...defaultRooms];
+          schedule = [...defaultSchedule];
+          saveStorageData();
+          renderAll();
+          showToast('Ma\'lumotlar qayta tiklandi!');
+        }
+      };
+
+      // Room Modal Control
+      const roomModal = document.getElementById('roomModal');
+      document.getElementById('openRoomModalBtn').onclick = () => roomModal.classList.remove('hidden');
+      document.getElementById('closeRoomModalBtn').onclick = () => roomModal.classList.add('hidden');
+
+      // Lesson Modal Control
+      const lessonModal = document.getElementById('lessonModal');
+      document.getElementById('openLessonModalBtn').onclick = () => {
+        document.getElementById('conflictAlert').classList.add('hidden');
+        lessonModal.classList.remove('hidden');
+      };
+      document.getElementById('closeLessonModalBtn').onclick = () => lessonModal.classList.add('hidden');
+      document.getElementById('closeRoomDetailBtn').onclick = () => document.getElementById('roomDetailModal').classList.add('hidden');
+
+      document.getElementById('exportCsvBtn').onclick = exportToCSV;
+
+      // Add Room Form Submit
+      document.getElementById('roomForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const number = document.getElementById('roomNumberInput').value.trim();
+        const capacity = parseInt(document.getElementById('roomCapacityInput').value);
+        const floor = parseInt(document.getElementById('roomFloorInput').value);
+
+        if (!number || isNaN(capacity) || isNaN(floor)) return;
+
+        const newRoom = {
+          id: 'R_' + Date.now(),
+          number,
+          capacity,
+          floor
+        };
+
+        rooms.push(newRoom);
+        saveStorageData();
+
+        e.target.reset();
+        roomModal.classList.add('hidden');
+        renderAll();
+        showToast(`Yangi xona (${number}) qo'shildi!`);
+      });
+
+      // Add Lesson Form Submit
+      document.getElementById('lessonForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const day = document.getElementById('dayInput').value;
+        const roomId = document.getElementById('roomSelectInput').value;
+        const group = document.getElementById('groupInput').value.trim();
+        const subject = document.getElementById('subjectInput').value.trim();
+        const teacher = document.getElementById('teacherInput').value.trim();
+        const startTime = document.getElementById('startTimeInput').value;
+        const endTime = document.getElementById('endTimeInput').value;
+
+        if (!roomId) {
+          alert('Iltimos, avval xona tanlang yoki yangi xona qo\'shing!');
+          return;
+        }
+
+        if (startTime >= endTime) {
+          alert('Tugash vaqti boshlanish vaqtidan keyin bo\'lishi kerak!');
+          return;
+        }
+
+        if (hasTimeConflict(roomId, day, startTime, endTime)) {
+          document.getElementById('conflictAlert').classList.remove('hidden');
+          return;
+        }
+
+        const newLesson = {
+          id: Date.now(),
+          day, roomId, group, subject, teacher, startTime, endTime
+        };
+
+        schedule.push(newLesson);
+        saveStorageData();
+
+        e.target.reset();
+        lessonModal.classList.add('hidden');
+        renderAll();
+        showToast('Yangi dars jadvalga qo\'shildi!');
+      });
+    }
+  </script>
+</body>
+</html>
